@@ -171,8 +171,8 @@ steps:
       - '-c'
       - |
         sleep 10
-        SERVICE_URL=$(gcloud run services describe dashboard-backend-staging --region=us-central1 --format='value(status.url)')
-        curl -f $SERVICE_URL/health || exit 1
+        SERVICE_URL=$$(gcloud run services describe dashboard-backend-staging --region=us-central1 --format='value(status.url)')
+        curl -f $$SERVICE_URL/health || exit 1
         echo "Staging smoke tests passed"
     waitFor: ['deploy-staging']
 
@@ -183,13 +183,13 @@ steps:
     args:
       - '-c'
       - |
-        if [ "$BRANCH_NAME" = "main" ]; then
+        if [ "$$BRANCH_NAME" = "main" ]; then
           gcloud run deploy dashboard-backend \
-            --image gcr.io/$PROJECT_ID/dashboard-backend:$COMMIT_SHA \
+            --image gcr.io/$$PROJECT_ID/dashboard-backend:$$COMMIT_SHA \
             --region us-central1 \
             --platform managed \
-            --service-account dashboard-backend-sa@$PROJECT_ID.iam.gserviceaccount.com \
-            --set-env-vars GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1,BIGQUERY_DATASET=agent_data,ENVIRONMENT=production \
+            --service-account dashboard-backend-sa@$$PROJECT_ID.iam.gserviceaccount.com \
+            --set-env-vars GCP_PROJECT_ID=$$PROJECT_ID,GCP_REGION=us-central1,BIGQUERY_DATASET=agent_data,ENVIRONMENT=production \
             --set-secrets TWILIO_AUTH_TOKEN=twilio-auth-token:latest,OAUTH_CLIENT_SECRET=oauth-client-secret:latest \
             --allow-unauthenticated \
             --max-instances 100 \
@@ -217,10 +217,10 @@ steps:
     args:
       - '-c'
       - |
-        if [ "$BRANCH_NAME" = "main" ]; then
+        if [ "$$BRANCH_NAME" = "main" ]; then
           sleep 10
-          SERVICE_URL=$(gcloud run services describe dashboard-backend --region=us-central1 --format='value(status.url)')
-          curl -f $SERVICE_URL/health || exit 1
+          SERVICE_URL=$$(gcloud run services describe dashboard-backend --region=us-central1 --format='value(status.url)')
+          curl -f $$SERVICE_URL/health || exit 1
           echo "Production smoke tests passed"
         else
           echo "Skipping production smoke tests"
