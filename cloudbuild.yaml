@@ -247,9 +247,6 @@ options:
   # Logging options
   logging: CLOUD_LOGGING_ONLY
   
-  # Build timeout
-  timeout: '1800s'
-  
   # Dynamic substitutions
   dynamicSubstitutions: true
 
