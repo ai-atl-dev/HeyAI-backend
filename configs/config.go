@@ -52,6 +52,11 @@ func LoadConfig() (*models.Config, error) {
 
 		ExternalAgentAPIURL: getEnv("EXTERNAL_AGENT_API_URL", ""),
 		ExternalAgentAPIKey: getEnv("EXTERNAL_AGENT_API_KEY", ""),
+		
+		SesameAIAPIKey:  getEnv("SESAME_AI_API_KEY", ""),
+		SesameAIBaseURL: getEnv("SESAME_AI_BASE_URL", ""),
+		
+		ElevenLabsAPIKey: getEnv("ELEVENLABS_API_KEY", ""),
 	}
 
 	if err := validateConfig(config); err != nil {

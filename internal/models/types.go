@@ -174,6 +174,11 @@ type Config struct {
 	
 	ExternalAgentAPIURL string
 	ExternalAgentAPIKey string
+	
+	SesameAIAPIKey  string
+	SesameAIBaseURL string
+	
+	ElevenLabsAPIKey string
 }
 
 // APIResponse represents a standard API response
