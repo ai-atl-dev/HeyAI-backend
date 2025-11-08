@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/yourusername/dashboard-backend/internal/models"
+	"github.com/ai-atl-dev/HeyAI-backend/internal/models"
 	"google.golang.org/api/iterator"
 )
 
