@@ -93,12 +93,12 @@ func (s *FirestoreService) GetAgentByPhoneNumber(ctx context.Context, phoneNumbe
 func (s *FirestoreService) ListAgents(ctx context.Context, ownerID string) ([]*models.Agent, error) {
 	var agents []*models.Agent
 
-	query := s.client.Collection(s.agentsCollection)
+	var iter *firestore.DocumentIterator
 	if ownerID != "" {
-		query = query.Where("owner_id", "==", ownerID)
+		iter = s.client.Collection(s.agentsCollection).Where("owner_id", "==", ownerID).Documents(ctx)
+	} else {
+		iter = s.client.Collection(s.agentsCollection).Documents(ctx)
 	}
-
-	iter := query.Documents(ctx)
 	defer iter.Stop()
 
 	for {

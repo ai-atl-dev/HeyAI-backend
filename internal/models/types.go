@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/xml"
+	"time"
+)
 
 // Agent represents an AI voice agent configuration
 type Agent struct {

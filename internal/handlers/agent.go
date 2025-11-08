@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -176,15 +177,20 @@ func (h *AgentHandler) handleCompletedCall(c *gin.Context, req *models.TwilioWeb
 	}
 
 	// Create call record
+	duration := 0
+	if callDetails.Duration != nil {
+		duration, _ = strconv.Atoi(*callDetails.Duration)
+	}
+	
 	call := &models.Call{
 		ID:           uuid.New().String(),
 		AgentID:      agent.ID,
 		CallerNumber: req.From,
 		CallSID:      req.CallSid,
 		Status:       "completed",
-		StartTime:    time.Now().Add(-time.Duration(*callDetails.Duration) * time.Second),
+		StartTime:    time.Now().Add(-time.Duration(duration) * time.Second),
 		EndTime:      time.Now(),
-		Duration:     int(*callDetails.Duration),
+		Duration:     duration,
 		Transcript:   transcript,
 		Summary:      summary,
 		Cost:         0.0, // Calculate based on duration

@@ -62,8 +62,7 @@ func main() {
 	twilioService := services.NewTwilioService(config)
 	
 	sesameAIService := services.NewSesameAIService(config)
-	
-	elevenLabsService := services.NewElevenLabsService(config)
+	_ = sesameAIService // Will be used for voice synthesis
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(config.JWTSecret)
