@@ -6,6 +6,8 @@ steps:
     env:
       - 'GO111MODULE=on'
       - 'GOPROXY=https://proxy.golang.org'
+      - 'GOPATH=/workspace/gopath'
+    dir: '.'
 
   # Step 2: Verify Go modules
   - name: 'gcr.io/cloud-builders/go'
