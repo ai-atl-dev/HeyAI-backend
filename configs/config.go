@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yourusername/dashboard-backend/internal/models"
+	"github.com/ai-atl-dev/HeyAI-backend/internal/models"
 )
 
 // LoadConfig loads configuration from environment variables
