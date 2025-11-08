@@ -245,7 +245,7 @@ options:
   substitutionOption: 'ALLOW_LOOSE'
   
   # Logging options
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY
   
   # Dynamic substitutions
   dynamicSubstitutions: true
