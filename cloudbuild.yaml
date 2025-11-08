@@ -65,10 +65,10 @@ steps:
     args:
       - '-c'
       - |
-        go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//' > coverage.txt
-        COVERAGE=$(cat coverage.txt)
-        echo "Total coverage: $COVERAGE%"
-        if [ $(echo "$COVERAGE < 70" | bc) -eq 1 ]; then
+        go tool cover -func=coverage.out | grep total | awk '{print $$3}' | sed 's/%//' > coverage.txt
+        COVERAGE=$$(cat coverage.txt)
+        echo "Total coverage: $$COVERAGE%"
+        if [ $$(echo "$$COVERAGE < 70" | bc) -eq 1 ]; then
           echo "Coverage is below 70% threshold"
           exit 1
         fi
