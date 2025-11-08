@@ -13,12 +13,16 @@ steps:
   - name: 'gcr.io/cloud-builders/go'
     id: 'verify-modules'
     args: ['mod', 'verify']
+    env:
+      - 'GOPATH=/workspace/gopath'
     waitFor: ['download-dependencies']
 
   # Step 3: Check code formatting
   - name: 'gcr.io/cloud-builders/go'
     id: 'check-formatting'
     entrypoint: 'sh'
+    env:
+      - 'GOPATH=/workspace/gopath'
     args:
       - '-c'
       - |
@@ -33,6 +37,8 @@ steps:
   - name: 'gcr.io/cloud-builders/go'
     id: 'vet'
     args: ['vet', './...']
+    env:
+      - 'GOPATH=/workspace/gopath'
     waitFor: ['download-dependencies']
 
   # Step 5: Run linting
@@ -58,12 +64,15 @@ steps:
     args: ['test', './...', '-v', '-coverprofile=coverage.out', '-covermode=atomic']
     env:
       - 'CGO_ENABLED=0'
+      - 'GOPATH=/workspace/gopath'
     waitFor: ['verify-modules', 'vet']
 
   # Step 8: Check test coverage threshold
   - name: 'gcr.io/cloud-builders/go'
     id: 'coverage-check'
     entrypoint: 'sh'
+    env:
+      - 'GOPATH=/workspace/gopath'
     args:
       - '-c'
       - |
@@ -82,12 +91,15 @@ steps:
     args: ['test', './...', '-race', '-short']
     env:
       - 'CGO_ENABLED=1'
+      - 'GOPATH=/workspace/gopath'
     waitFor: ['verify-modules']
 
   # Step 10: Run benchmarks
   - name: 'gcr.io/cloud-builders/go'
     id: 'benchmarks'
     args: ['test', './...', '-bench=.', '-benchmem', '-run=^$']
+    env:
+      - 'GOPATH=/workspace/gopath'
     waitFor: ['unit-tests']
 
   # Step 11: Build the application
@@ -98,6 +110,7 @@ steps:
       - 'CGO_ENABLED=0'
       - 'GOOS=linux'
       - 'GOARCH=amd64'
+      - 'GOPATH=/workspace/gopath'
     waitFor: ['unit-tests', 'race-detection', 'lint']
 
   # Step 12: Build Docker image
