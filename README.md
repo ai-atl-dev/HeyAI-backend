@@ -1,6 +1,10 @@
-# HeyAI Backend
-
-Go-based backend service for the AI Voice Agent platform. Handles Twilio voice webhooks, integrates with Vertex AI for conversational AI, and provides REST APIs for the admin console.
+<div align="center">
+  <img src="assets/HeyAI Logo.jpg" alt="HeyAI Logo" width="200"/>
+  
+  # HeyAI Backend
+  
+  <p>Go-based backend service for the AI Voice Agent platform. Handles Twilio voice webhooks, integrates with Vertex AI for conversational AI, and provides REST APIs for the admin console.</p>
+</div>
 
 ## Architecture Overview
 
