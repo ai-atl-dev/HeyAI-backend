@@ -16,7 +16,7 @@ This service acts as the central backend that:
 
 - Go 1.21 or higher
 - GCP account with billing enabled
-- Twilio account setup
+- Twilio account
 - gcloud CLI installed and configured
 
 ## Project Structure
