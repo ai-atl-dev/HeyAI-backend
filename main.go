@@ -30,6 +30,7 @@ func main() {
 	log.Println("ELEVENLABS_API_KEY set:", os.Getenv("ELEVENLABS_API_KEY") != "")
 	log.Println("ELEVEN_VOICE_ID set:", os.Getenv("ELEVEN_VOICE_ID") != "")
 
+	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/voice", voiceHandler)
 	http.HandleFunc("/speech-result", speechResultHandler)
 	http.HandleFunc("/audio", audioHandler)
@@ -40,6 +41,13 @@ func main() {
 	}
 	log.Printf("Server listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+// ----- HEALTH CHECK -----
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, `{"status":"ok","service":"heyai-backend"}`)
 }
 
 // ----- TWILIO HANDLERS -----
