@@ -58,7 +58,7 @@ func voiceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml")
 	twiml := `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">Hi — welcome. Please ask your question after the beep.</Say>
+  <Say voice="alice">Welcome. Please ask your question after the beep.</Say>
   <Gather input="speech" action="/speech-result" method="POST" speechTimeout="auto"/>
   <Say>We didn’t get any input. Goodbye.</Say>
 </Response>`
