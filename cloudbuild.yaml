@@ -8,30 +8,33 @@ substitutions:
   _SERVICE_NAME: "heyai-backend"
   _AR_REPO: "services"
   _REGION: "us-central1"
+  _BASE_URL: "https://31c44e68f094.ngrok-free.app"
   _VERTEX_AI_LOCATION: "us-central1"
   _VERTEX_AI_MODEL: "gemini-2.5-flash"
-  _KOOZIE_AGENT_URI: ""
+  _NGROK_HOST: "b10362b67682.ngrok-free.app"
+  _KOOZIE_AGENT_URI: "https://koozie-agent-service-127756525541.us-central1.run.app"
 
 options:
   substitution_option: ALLOW_LOOSE
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
 
 images:
-  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:$COMMIT_SHA"
+  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:latest"
 
 steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
       - build
       - "-f"
-      - HeyAI-backend/Dockerfile
+      - Dockerfile
       - "-t"
-      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:$COMMIT_SHA"
-      - HeyAI-backend
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:latest"
+      - .
 
   - name: "gcr.io/cloud-builders/docker"
     args:
       - push
-      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:$COMMIT_SHA"
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:latest"
 
   - name: "gcr.io/cloud-builders/gcloud"
     args:
@@ -39,7 +42,7 @@ steps:
       - deploy
       - "$_SERVICE_NAME"
       - "--image"
-      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:$COMMIT_SHA"
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_AR_REPO/heyai-backend:latest"
       - "--region"
       - "$_REGION"
       - "--platform"
@@ -48,7 +51,7 @@ steps:
       - "--port"
       - "8080"
       - "--set-env-vars"
-      - "GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=$_REGION,VERTEX_AI_LOCATION=$_VERTEX_AI_LOCATION,VERTEX_AI_MODEL=$_VERTEX_AI_MODEL,KOOZIE_AGENT_URI=$_KOOZIE_AGENT_URI"
+      - "BASE_URL=$_BASE_URL,VERTEX_AI_LOCATION=$_VERTEX_AI_LOCATION,VERTEX_AI_MODEL=$_VERTEX_AI_MODEL,NGROK_HOST=$_NGROK_HOST,KOOZIE_AGENT_URI=$_KOOZIE_AGENT_URI"
       - "--set-secrets"
       - "ELEVENLABS_API_KEY=ELEVENLABS_API_KEY:latest,ELEVEN_VOICE_ID=ELEVEN_VOICE_ID:latest"
 

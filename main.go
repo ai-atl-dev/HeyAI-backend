@@ -27,12 +27,6 @@ func main() {
 		log.Println(".env file loaded successfully")
 	}
 
-	// Allow overriding the Python AI URL via environment variable
-	if envURL := os.Getenv("KOOZIE_AGENT_URI"); envURL != "" {
-		pythonAIURL = envURL
-	}
-	log.Println("Using KOOZIE_AGENT_URI:", pythonAIURL)
-
 	log.Println("ELEVENLABS_API_KEY set:", os.Getenv("ELEVENLABS_API_KEY") != "")
 	log.Println("ELEVEN_VOICE_ID set:", os.Getenv("ELEVEN_VOICE_ID") != "")
 

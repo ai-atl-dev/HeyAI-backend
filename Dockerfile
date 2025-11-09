@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.22 AS builder
+FROM golang:1.25 AS builder
 WORKDIR /app
 
 # Only download modules first for better layer caching
