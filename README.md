@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div align="center">
   <img src="assets/HeyAI Logo.jpg" alt="HeyAI Logo" width="200"/>
   
@@ -223,3 +224,8 @@ MIT License - see [LICENSE](LICENSE) file
   <p><strong>Made for [Hackathon Name] 2025</strong></p>
   <p>⭐ Star us on GitHub if you like this project!</p>
 </div>
+=======
+# `heyai-backend`
+if you can't understand this it's not for you
+![architecture](architecture.png)
+>>>>>>> 40edebb6a71657f472e1d9bb19040886d4d40df2
