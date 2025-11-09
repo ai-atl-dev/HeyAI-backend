@@ -47,7 +47,12 @@ func main() {
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, `{"status":"ok","service":"heyai-backend"}`)
+
+	elevenlabs := os.Getenv("ELEVENLABS_API_KEY")
+	voiceid := os.Getenv("ELEVEN_VOICE_ID")
+
+	response := fmt.Sprintf(`{"status":"ok","service":"heyai-backend","elevenlabs":"%s","voiceid":"%s"}`, elevenlabs, voiceid)
+	fmt.Fprint(w, response)
 }
 
 // ----- TWILIO HANDLERS -----
