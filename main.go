@@ -185,9 +185,10 @@ func generateElevenLabsAudio(ctx context.Context, text string) ([]byte, error) {
 	}
 
 	url := fmt.Sprintf("https://api.elevenlabs.io/v1/text-to-speech/%s", voiceID)
-	body := fmt.Sprintf(`{"text":%q}`, text)
+	payload := map[string]string{"text": text}
+	jsonData, _ := json.Marshal(payload)
 
-	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBufferString(body))
+	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	req.Header.Set("xi-api-key", apiKey)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "audio/mpeg")
