@@ -12,15 +12,19 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
-	pythonAIURL  string
-	elevenAPIKey string
+	pythonAIURL   string
+	elevenAPIKey  string
 	elevenVoiceID string
+	rdb           *redis.Client
 )
+
 
 func main() {
 	// Load .env file
@@ -38,6 +42,17 @@ func main() {
 		log.Fatal("ELEVENLABS_API_KEY or ELEVEN_VOICE_ID not set in environment or .env")
 	}
 
+	// Initialize Redis client
+	rdb = redis.NewClient(&redis.Options{
+		Addr: "127.0.0.1:6379",
+		DB:   0,
+	})
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Fatalf("❌ Redis connection failed: %v", err)
+	}
+	log.Println("✅ Connected to Redis at 127.0.0.1:6379")
+
 	http.HandleFunc("/voice", voiceHandler)
 	http.HandleFunc("/speech-result", speechResultHandler)
 	http.HandleFunc("/audio", audioHandler)
@@ -46,12 +61,9 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	log.Printf("Server listening on port %s\n", port)
+	log.Printf("🚀 Server listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
-
-// --- (rest of your handlers remain unchanged) ---
-
 
 // Voice entrypoint
 func voiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,9 +83,9 @@ func speechResultHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	userText := r.FormValue("SpeechResult")
+	userText := strings.TrimSpace(r.FormValue("SpeechResult"))
 	from := r.FormValue("From")
-	log.Printf("Received from %s: %s\n", from, userText)
+	log.Printf("🗣️ Received from %s: %s\n", from, userText)
 
 	lower := strings.ToLower(userText)
 	if strings.Contains(lower, "hang up") || strings.Contains(lower, "goodbye") {
@@ -84,42 +96,43 @@ func speechResultHandler(w http.ResponseWriter, r *http.Request) {
 
 	audioURL := fmt.Sprintf("https://%s/audio?question=%s", r.Host, urlQueryEscape(userText))
 	w.Header().Set("Content-Type", "text/xml")
-//     twiml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
-// <Response>
-//   <Play>%s</Play>
-//   <Gather input="speech" action="/speech-result" method="POST" speechTimeout="auto"/>
-//   <Say>No response detected. Goodbye.</Say>
-// </Response>`, audioURL)
 	twiml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Play>%s</Play>
   <Gather input="speech" action="/speech-result" method="POST" speechTimeout="auto">
-    <Say>go ahead</Say>
+    <Say>Go ahead</Say>
   </Gather>
   <Say>No response detected. Goodbye.</Say>
 </Response>`, audioURL)
 	fmt.Fprint(w, twiml)
 }
 
-// Streams TTS for the AI response
+// Streams TTS for the AI response, with Redis caching
 func audioHandler(w http.ResponseWriter, r *http.Request) {
-	question := r.URL.Query().Get("question")
+	ctx := r.Context()
+	question := strings.TrimSpace(r.URL.Query().Get("question"))
 	if question == "" {
 		http.Error(w, "missing question param", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "audio/mpeg")
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming not supported", http.StatusInternalServerError)
+	cacheKey := "airesp:" + strings.ToLower(question)
+
+	// Check Redis cache first
+	cachedAudio, err := rdb.Get(ctx, cacheKey).Bytes()
+	if err == nil && len(cachedAudio) > 0 {
+		log.Printf("🟢 Redis cache hit: %s", question)
+		w.Header().Set("Content-Type", "audio/mpeg")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Write(cachedAudio)
 		return
 	}
 
-	ctx := r.Context()
+	log.Printf("🔵 Cache miss: %s", question)
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 
-	// Call Python SSE endpoint
+	// --- Get AI text response via SSE ---
 	reqBody := fmt.Sprintf(`{"message":%q}`, question)
 	req, _ := http.NewRequestWithContext(ctx, "POST", pythonAIURL, strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -132,40 +145,49 @@ func audioHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
+	var fullResponse strings.Builder
 	scanner := bufio.NewScanner(resp.Body)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data: ") {
 			continue
 		}
-
 		data := strings.TrimPrefix(line, "data: ")
-		log.Printf("SSE chunk: %s", data)
-
 		text := extractTextFromSSE(data)
 		if text == "" {
 			continue
 		}
-
-		audioChunk, err := generateElevenLabsAudio(ctx, text)
-		if err != nil {
-			log.Printf("TTS error: %v", err)
-			continue
-		}
-
-		_, _ = w.Write(audioChunk)
-		flusher.Flush()
+		fullResponse.WriteString(text + " ")
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Printf("Error reading SSE: %v", err)
+	finalText := strings.TrimSpace(fullResponse.String())
+	if finalText == "" {
+		http.Error(w, "empty AI response", http.StatusInternalServerError)
+		return
 	}
+
+	// --- Call ElevenLabs for final TTS ---
+	audioBytes, err := generateElevenLabsAudio(ctx, finalText)
+	if err != nil {
+		log.Printf("TTS error: %v", err)
+		http.Error(w, "TTS error", http.StatusInternalServerError)
+		return
+	}
+
+	// --- Write to client ---
+	_, _ = w.Write(audioBytes)
+
+	// --- Store in Redis (cache for 24 hours) ---
+	if err := rdb.Set(ctx, cacheKey, audioBytes, 24*time.Hour).Err(); err != nil {
+		log.Printf("Redis SET error: %v", err)
+	}
+	log.Printf("💾 Cached response for: %s", question)
 }
 
 // Extract "text" field from SSE JSON
 func extractTextFromSSE(line string) string {
 	line = strings.TrimSpace(line)
-	if line == "" || line == "data:" {
+	if line == "" {
 		return ""
 	}
 	var parsed map[string]interface{}
@@ -187,8 +209,7 @@ func generateElevenLabsAudio(ctx context.Context, text string) ([]byte, error) {
 
 	url := fmt.Sprintf("https://api.elevenlabs.io/v1/text-to-speech/%s", elevenVoiceID)
 	body := fmt.Sprintf(`{"text":%q}`, text)
-
-	log.Printf("Calling ElevenLabs with voiceID=%q text=%q", elevenVoiceID, text)
+	log.Printf("Calling ElevenLabs with text: %q", text)
 
 	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBufferString(body))
 	req.Header.Set("xi-api-key", elevenAPIKey)
